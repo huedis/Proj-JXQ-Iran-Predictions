@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iran-GCC Conflict Predictions Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: #f2f2f7; color: #1c1c1e; }
+
+  /* ── HEADER — Apple HIG, no border-radius, full width ── */
+  .header { background: #1c1c1e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
+  .header h1 span { color: rgba(255,255,255,0.48); font-weight: 400; font-size: 13px; display: block; margin-top: 2px; letter-spacing: -0.1px; }
+  .header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+  .header-meta { text-align: right; font-size: 12px; color: rgba(255,255,255,0.48); }
+  .header-meta strong { color: white; display: block; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+  .header-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+  .sources-btn { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background 0.15s; font-family: inherit; letter-spacing: -0.1px; }
+  .sources-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* ── TIMELINE TOGGLE ROW ── */
+  .timeline-toggle-row { background: #f2f2f7; padding: 12px 32px 0; display: flex; align-items: center; justify-content: space-between; }
+  .timeline-toggle-btn { background: none; border: none; color: #8e8e93; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer; padding: 0 0 8px; display: flex; align-items: center; gap: 5px; font-family: inherit; }
+  .timeline-toggle-btn:hover { color: #636366; }
+  .timeline-toggle-btn .chevron { font-size: 9px; transition: transform 0.2s; display: inline-block; }
+  .timeline-toggle-btn.collapsed .chevron { transform: rotate(-90deg); }
+
+  /* ── TIMELINE BAR — card-style with side margins, rounded edges ── */
+  .timeline-bar { background: white; margin: 0 32px 16px; border-radius: 12px; padding: 0 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04); transition: max-height 0.25s ease, margin-bottom 0.25s ease, opacity 0.2s ease; max-height: 150px; }
+  .timeline-bar.hidden { max-height: 0; margin-bottom: 0; overflow: hidden; opacity: 0; padding-top: 0; padding-bottom: 0; }
+  .timeline-bar::-webkit-scrollbar { height: 4px; }
+  .timeline-bar::-webkit-scrollbar-track { background: transparent; }
+  .timeline-bar::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 2px; }
+  .timeline-track { display: flex; align-items: stretch; min-width: max-content; }
+  .tl-entry { display: flex; flex-direction: column; align-items: center; padding: 10px 16px; cursor: pointer; border-radius: 8px; transition: background 0.15s; min-width: 130px; margin: 6px 2px; }
+  .tl-entry.active { background: #dbeafe; }
+  .tl-entry:hover:not(.active) { background: #f2f2f7; }
+  .tl-connector { width: 24px; align-self: center; height: 1px; background: #e5e5ea; flex-shrink: 0; }
+  .tl-dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 6px; }
+  .tl-dot.filled { background: #007AFF; box-shadow: 0 0 0 3px rgba(0,122,255,0.18); }
+  .tl-dot.empty { background: #d1d1d6; }
+  .tl-time { font-size: 11px; color: #1c1c1e; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.2px; }
+  .tl-time.muted { color: #8e8e93; font-weight: 400; }
+  .tl-stats { display: flex; gap: 4px; }
+  .tstat { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+  .tstat-c { background: #dcfce7; color: #15803d; }
+  .tstat-d { background: #fef3c7; color: #b45309; }
+  .tstat-n { background: #f2f2f7; color: #8e8e93; border: 1px solid #e5e5ea; }
+  .tl-label { font-size: 10px; color: #8e8e93; margin-top: 3px; }
+  .tl-delta { font-size: 9px; color: #007AFF; margin-top: 2px; font-style: italic; white-space: nowrap; letter-spacing: 0; }
+
+  /* ── MAIN LAYOUT — sidebar + grid ── */
+  .main-layout { display: flex; gap: 20px; padding: 8px 32px 24px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+
+  /* ── TABLE OF CONTENTS SIDEBAR — Apple macOS source-list ── */
+  .toc-sidebar { width: 182px; flex-shrink: 0; position: sticky; top: 16px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04); overflow: hidden; }
+  .toc-header { font-size: 10px; font-weight: 700; color: #8e8e93; padding: 11px 14px 7px; letter-spacing: 0.4px; text-transform: uppercase; border-bottom: 1px solid #f2f2f7; }
+  .toc-item { display: flex; align-items: center; gap: 7px; padding: 6px 12px; text-decoration: none; color: #3c3c43; font-size: 13px; transition: background 0.1s; }
+  .toc-item:hover { background: #f2f2f7; color: #1c1c1e; }
+  .toc-item.active { background: #dbeafe; color: #1c1c1e; }
+  .toc-num { font-size: 10px; font-weight: 600; color: #c7c7cc; flex-shrink: 0; width: 18px; }
+  .toc-icon { font-size: 11px; flex-shrink: 0; }
+  .toc-label { font-size: 12px; line-height: 1.3; }
+
+  /* ── GRID ── */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-width: 0; }
+
+  /* ── CARD JUMP HIGHLIGHT ── */
+  @keyframes cardPulse {
+    0%   { background: #dbeafe; }
+    100% { background: white; }
+  }
+  .card.jump-highlight { animation: cardPulse 1.2s ease-out forwards; }
+
+  /* ── CARD — Apple direction: 16px radius, layered shadow ── */
+  /* Left stripe via ::before — overflow:hidden clips it cleanly to the card radius */
+  .card { background: white; border-radius: 16px; padding: 20px 20px 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04); overflow: hidden; position: relative; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: #e5e5ea; }
+  .card.confirmed::before { background: #34c759; }
+  .card.developing::before { background: #ff9f0a; }
+  .card.none::before { background: #c7c7cc; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .card-title-row { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
+  .pred-num { font-size: 11px; font-weight: 600; color: #8e8e93; background: #f2f2f7; border-radius: 6px; padding: 2px 7px; white-space: nowrap; margin-top: 2px; letter-spacing: -0.1px; }
+  .card-title { font-size: 14px; font-weight: 600; color: #1c1c1e; line-height: 1.4; letter-spacing: -0.2px; }
+
+  /* ── STATUS INDICATOR — Uber style: small dot + uppercase text ── */
+  .status-dot { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; display: flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0; padding-top: 3px; }
+  .status-dot::before { content: '●'; font-size: 7px; line-height: 1; }
+  .status-dot.s-confirmed { color: #1a7f37; }
+  .status-dot.s-developing { color: #b45309; }
+  .status-dot.s-none { color: #8e8e93; }
+
+  /* ── METRICS ── */
+  .metrics { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .metric { font-size: 12px; background: #f2f2f7; border: none; border-radius: 8px; padding: 5px 10px; color: #3c3c43; display: flex; align-items: center; gap: 5px; }
+  .metric-label { color: #8e8e93; font-size: 11px; }
+  .metric-value { font-weight: 600; color: #1c1c1e; letter-spacing: -0.2px; }
+  .metric-up { color: #d70015; }
+  .metric-down { color: #248a3d; }
+
+  /* ── TIER BADGE ── */
+  .tier-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+  .tier-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; cursor: default; position: relative; display: flex; align-items: center; gap: 4px; }
+  .tier-1 { background: #fff1f0; color: #c0392b; border: 1px solid #ffd0cd; }
+  .tier-2 { background: #fff8f0; color: #c05621; border: 1px solid #ffd9b0; }
+  .tier-badge .info-icon { font-size: 10px; background: rgba(0,0,0,0.08); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: help; }
+  .tooltip { display: none; position: absolute; left: 0; top: 100%; margin-top: 4px; background: #1c1c1e; color: white; font-size: 11px; font-weight: 400; padding: 8px 10px; border-radius: 8px; width: 240px; z-index: 100; line-height: 1.5; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .tier-badge:hover .tooltip { display: block; }
+
+  /* ── CARD SUMMARY ── */
+  .card-summary { font-size: 13px; color: #3c3c43; line-height: 1.6; margin-top: 8px; letter-spacing: -0.1px; }
+  .date-tag { font-size: 10.5px; color: #8e8e93; font-style: italic; white-space: nowrap; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-row { margin: 8px 0 4px; }
+  .progress-label { font-size: 11px; color: #8e8e93; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .progress-bar { height: 6px; background: #e5e5ea; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-red { background: #ff3b30; }
+  .fill-amber { background: #ff9f0a; }
+  .fill-green { background: #34c759; }
+
+  /* ── SOURCES TOGGLE ── */
+  .sources-toggle { font-size: 11px; color: #007AFF; cursor: pointer; margin-top: 10px; display: inline-flex; align-items: center; gap: 4px; background: none; border: none; padding: 0; font-family: inherit; font-weight: 500; }
+  .sources-toggle:hover { color: #0062cc; }
+  .sources-list { display: none; margin-top: 8px; padding: 10px 12px; background: #f2f2f7; border-radius: 8px; }
+  .sources-list.open { display: block; }
+  .sources-list a { display: block; font-size: 11px; color: #007AFF; text-decoration: none; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sources-list a:hover { text-decoration: underline; }
+  .source-label { font-size: 10px; color: #8e8e93; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  /* ── FOOTER ── */
+  .footer { background: #1c1c1e; color: rgba(255,255,255,0.38); text-align: center; padding: 14px; font-size: 11px; margin-top: 8px; letter-spacing: -0.1px; }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── MANAGE SOURCES PANEL ── */
+  .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 200; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  .panel-overlay.open { display: block; }
+  .panel { position: fixed; top: 0; right: -480px; width: 460px; max-width: 95vw; height: 100vh; background: white; z-index: 201; display: flex; flex-direction: column; box-shadow: -4px 0 32px rgba(0,0,0,0.12); transition: right 0.25s ease; }
+  .panel.open { right: 0; }
+  .panel-head { background: #1c1c1e; color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+  .panel-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .panel-head p { font-size: 12px; color: rgba(255,255,255,0.48); margin-top: 4px; line-height: 1.5; }
+  .panel-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 22px; cursor: pointer; line-height: 1; padding: 0; margin-left: 16px; flex-shrink: 0; }
+  .panel-close:hover { color: white; }
+  .panel-notice { background: #fffbeb; border-bottom: 1px solid #fde68a; padding: 10px 24px; font-size: 12px; color: #92400e; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .panel-body { overflow-y: auto; flex: 1; padding: 16px 16px 24px; background: #f2f2f7; }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 2px; }
+  .source-category { background: white; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+  .source-category-title { font-size: 10px; font-weight: 700; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 16px 6px; }
+  .source-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid #f2f2f7; gap: 12px; }
+  .source-info { flex: 1; min-width: 0; }
+  .source-name { font-size: 13px; font-weight: 500; color: #1c1c1e; letter-spacing: -0.1px; }
+  .source-desc { font-size: 11px; color: #8e8e93; margin-top: 1px; }
+  .source-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 3px; }
+  .tag-wire { background: #eff6ff; color: #1d4ed8; }
+  .tag-broadcast { background: #f0fdf4; color: #15803d; }
+  .tag-financial { background: #fefce8; color: #854d0e; }
+  .tag-regional { background: #fdf4ff; color: #7e22ce; }
+  .tag-analysis { background: #fff1f2; color: #be123c; }
+  .tag-social { background: #fff7ed; color: #c2410c; }
+  .tag-unverified { background: #fef2f2; color: #991b1b; font-style: italic; }
+
+  /* ── TOGGLE SWITCH — Apple green ── */
+  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #e5e5ea; border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .toggle input:checked + .toggle-slider { background: #34c759; }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Iran–GCC Conflict Predictions Tracker
+      <span>Based on analysis by Prof. Jiang Xueqin · 14 predictions monitored</span>
+    </h1>
+  </div>
+  <div class="header-right">
+    <div class="header-meta">
+      <strong>Last updated: 7 Mar 2026, 14:00</strong>
+      Updated every 6 hours
+    </div>
+    <div class="header-divider"></div>
+    <button class="sources-btn" onclick="openPanel()">⚙ Manage Sources</button>
+  </div>
+</div>
+
+<!-- TIMELINE TOGGLE HEADER -->
+<div class="timeline-toggle-row">
+  <button class="timeline-toggle-btn" id="timelineToggle" onclick="toggleTimeline()">
+    <span class="chevron">▼</span> Update history
+  </button>
+</div>
+
+<!-- TIMELINE BAR -->
+<div class="timeline-bar" id="timelineBar">
+  <div class="timeline-track">
+
+    <!-- ── 36h ago ── -->
+    <div class="tl-entry">
+      <div class="tl-dot filled" style="background:#8e8e93;box-shadow:none;"></div>
+      <div class="tl-time">6 Mar · 02:00</div>
+      <div class="tl-stats">
+        <span class="tstat tstat-c">4 ✅</span>
+        <span class="tstat tstat-d">10 ⚠️</span>
+        <span class="tstat tstat-n">0 ❌</span>
+      </div>
+      <div class="tl-label">36h ago</div>
+      <div class="tl-delta">Day 6 · 4 confirmed</div>
+    </div>
+    <div class="tl-connector"></div>
+
+    <!-- ── 24h ago ── -->
+    <div class="tl-entry">
+      <div class="tl-dot filled" style="background:#8e8e93;box-shadow:none;"></div>
+      <div class="tl-time">6 Mar · 14:00</div>
+      <div class="tl-stats">
+        <span class="tstat tstat-c">4 ✅</span>
+        <span class="tstat tstat-d">10 ⚠️</span>
+        <span class="tstat tstat-n">0 ❌</span>
+      </div>
+      <div class="tl-label">24h ago</div>
+      <div class="tl-delta">+Russia intel confirmed</div>
+    </div>
+    <div class="tl-connector"></div>
+
+    <!-- ── 12h ago ── -->
+    <div class="tl-entry">
+      <div class="tl-dot filled" style="background:#8e8e93;box-shadow:none;"></div>
+      <div class="tl-time">7 Mar · 02:00</div>
+      <div class="tl-stats">
+        <span class="tstat tstat-c">5 ✅</span>
+        <span class="tstat tstat-d">9 ⚠️</span>
+        <span class="tstat tstat-n">0 ❌</span>
+      </div>
+      <div class="tl-label">12h ago</div>
+      <div class="tl-delta">+Rebellion ✅ confirmed</div>
+    </div>
+    <div class="tl-connector"></div>
+
+    <!-- ── Latest run ── -->
+    <div class="tl-entry active">
+      <div class="tl-dot filled"></div>
+      <div class="tl-time">7 Mar · 14:00</div>
+      <div class="tl-stats">
+        <span class="tstat tstat-c">5 ✅</span>
+        <span class="tstat tstat-d">9 ⚠️</span>
+        <span class="tstat tstat-n">0 ❌</span>
+      </div>
+      <div class="tl-label">Latest</div>
+    </div>
+    <div class="tl-connector"></div>
+
+    <!-- ── Scheduled future runs ── -->
+    <div class="tl-entry">
+      <div class="tl-dot empty"></div>
+      <div class="tl-time muted">7 Mar · 20:00</div>
+      <div class="tl-stats"><span class="tstat tstat-n">Next run</span></div>
+      <div class="tl-label">Scheduled</div>
+    </div>
+    <div class="tl-connector"></div>
+    <div class="tl-entry">
+      <div class="tl-dot empty"></div>
+      <div class="tl-time muted">8 Mar · 02:00</div>
+      <div class="tl-stats"><span class="tstat tstat-n">—</span></div>
+      <div class="tl-label">Scheduled</div>
+    </div>
+    <div class="tl-connector"></div>
+    <div class="tl-entry">
+      <div class="tl-dot empty"></div>
+      <div class="tl-time muted">8 Mar · 08:00</div>
+      <div class="tl-stats"><span class="tstat tstat-n">—</span></div>
+      <div class="tl-label">Scheduled</div>
+    </div>
+    <div class="tl-connector"></div>
+    <div class="tl-entry">
+      <div class="tl-dot empty"></div>
+      <div class="tl-time muted">8 Mar · 14:00</div>
+      <div class="tl-stats"><span class="tstat tstat-n">—</span></div>
+      <div class="tl-label">Scheduled</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+<!-- TOC SIDEBAR -->
+<nav class="toc-sidebar">
+  <div class="toc-header">Predictions</div>
+  <a class="toc-item" href="#card1"><span class="toc-num">#1</span><span class="toc-icon">✅</span><span class="toc-label">Hormuz closed</span></a>
+  <a class="toc-item" href="#card2"><span class="toc-num">#2</span><span class="toc-icon">✅</span><span class="toc-label">US bases attacked</span></a>
+  <a class="toc-item" href="#card3"><span class="toc-num">#3</span><span class="toc-icon">✅</span><span class="toc-label">Oil &amp; energy infra</span></a>
+  <a class="toc-item" href="#card4"><span class="toc-num">#4</span><span class="toc-icon">✅</span><span class="toc-label">Civil infra / hospitals</span></a>
+  <a class="toc-item" href="#card5"><span class="toc-num">#5</span><span class="toc-icon">⚠️</span><span class="toc-label">Desalination plants</span></a>
+  <a class="toc-item" href="#card6"><span class="toc-num">#6</span><span class="toc-icon">⚠️</span><span class="toc-label">Iran power plants</span></a>
+  <a class="toc-item" href="#card7"><span class="toc-num">#7</span><span class="toc-icon">✅</span><span class="toc-label">Rebellion in Iran</span></a>
+  <a class="toc-item" href="#card8"><span class="toc-num">#8</span><span class="toc-icon">⚠️</span><span class="toc-label">GCC expat exodus</span></a>
+  <a class="toc-item" href="#card9"><span class="toc-num">#9</span><span class="toc-icon">⚠️</span><span class="toc-label">GCC investment</span></a>
+  <a class="toc-item" href="#card10"><span class="toc-num">#10</span><span class="toc-icon">⚠️</span><span class="toc-label">US economy</span></a>
+  <a class="toc-item" href="#card11"><span class="toc-num">#11</span><span class="toc-icon">⚠️</span><span class="toc-label">US ground troops</span></a>
+  <a class="toc-item" href="#card12"><span class="toc-num">#12</span><span class="toc-icon">⚠️</span><span class="toc-label">Nuclear threats</span></a>
+  <a class="toc-item" href="#card13"><span class="toc-num">#13</span><span class="toc-icon">⚠️</span><span class="toc-label">Europe enters</span></a>
+  <a class="toc-item" href="#card14"><span class="toc-num">#14</span><span class="toc-icon">⚠️</span><span class="toc-label">Russia / China</span></a>
+</nav>
+
+<!-- GRID -->
+<div class="grid">
+
+  <!-- 1. STRAIT OF HORMUZ -->
+  <div class="card confirmed" id="card1">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#1</span>
+        <span class="card-title">Global economy suffering / Strait of Hormuz closed</span>
+      </div>
+      <span class="status-dot s-confirmed">Confirmed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Tanker traffic</span><span class="metric-value metric-up">~10% of normal</span></div>
+      <div class="metric"><span class="metric-label">Oil price</span><span class="metric-value metric-up">$80+/bbl ▲14%</span></div>
+      <div class="metric"><span class="metric-label">EU LNG spot</span><span class="metric-value metric-up">▲25%</span></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>Tanker traffic remaining</span><span>~10%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-red" style="width:10%"></div></div>
+    </div>
+    <p class="card-summary">IRGC announced closure <span class="date-tag">Mar 2</span> — warned vessels would be "set ablaze." Tanker traffic dropped ~90% within 48 hours <span class="date-tag">Mar 3–4</span>. Maersk, CMA CGM, Hapag-Lloyd suspended all transits. RBC Capital Markets called it the "biggest energy crisis since the 1970s oil embargo" <span class="date-tag">Mar 5</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.bloomberg.com/news/newsletters/2026-03-04/iran-war-brings-strait-of-hormuz-traffic-to-a-halt-evening-briefing-americas" target="_blank">Bloomberg · Iran War Brings Strait of Hormuz Traffic to a Halt (Mar 4)</a>
+      <a href="https://www.npr.org/2026/03/04/nx-s1-5736104/iran-war-oil-trump-israel-strait-hormuz-closed-energy-crisis" target="_blank">NPR · How traffic dried up in the Strait of Hormuz (Mar 4)</a>
+      <a href="https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis" target="_blank">Wikipedia · 2026 Strait of Hormuz Crisis</a>
+    </div>
+  </div>
+
+  <!-- 2. US MILITARY BASES -->
+  <div class="card confirmed" id="card2">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#2</span>
+        <span class="card-title">Attacks on US military bases in the Middle East</span>
+      </div>
+      <span class="status-dot s-confirmed">Confirmed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Bases attacked</span><span class="metric-value metric-up">11 / ~30</span></div>
+      <div class="metric"><span class="metric-label">US KIA</span><span class="metric-value metric-up">6</span></div>
+      <div class="metric"><span class="metric-label">Injured</span><span class="metric-value metric-up">50+</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-badge tier-1">🔴 Tier 1 hit: 5th Fleet HQ (Bahrain)
+        <span class="info-icon">i</span>
+        <div class="tooltip">Tier 1 bases house strategic command infrastructure — CENTCOM coordination, naval command, and intelligence fusion. Their degradation affects the entire theatre's operational coherence, not just local headcount.</div>
+      </div>
+      <div class="tier-badge tier-1">🔴 Tier 1 hit: Al Udeid (Qatar)
+        <span class="info-icon">i</span>
+        <div class="tooltip">Al Udeid is the largest US air base in the Middle East and the forward HQ of AFCENT, coordinating all US air operations in the region. A strike here disrupts air campaign planning and regional air dominance.</div>
+      </div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>Bases attacked</span><span>11 / ~30 (37%)</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-red" style="width:37%"></div></div>
+    </div>
+    <p class="card-summary">Iran fired ~230 drones in initial wave <span class="date-tag">Feb 28</span> across Kuwait, Bahrain, Qatar, Iraq, Jordan, Saudi Arabia, UAE. Both Tier 1 command hubs struck. Ongoing drone harassment reported through <span class="date-tag">Mar 5</span>. US forces unable to defend against saturation attacks.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.aljazeera.com/news/2026/3/5/drone-targets-us-base-in-iraq-as-iran-attacks-hit-region-amid-us-israel-war" target="_blank">Al Jazeera · Drones strike US base in Iraq, Doha explosions (Mar 5)</a>
+      <a href="https://www.france24.com/en/middle-east/20260228-what-we-know-about-us-military-bases-mideast-gulf-targeted-iran-retaliatory-strikes" target="_blank">France 24 · Iran targets US military bases (Feb 28)</a>
+      <a href="https://www.stripes.com/theaters/middle_east/2026-03-01/bases-damaged-iran-attacks-20916010.html" target="_blank">Stars &amp; Stripes · Here's what's going on at US bases (Mar 1)</a>
+    </div>
+  </div>
+
+  <!-- 3. OIL & ENERGY -->
+  <div class="card confirmed" id="card3">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#3</span>
+        <span class="card-title">Drone attacks on oil &amp; energy infrastructure in GCC</span>
+      </div>
+      <span class="status-dot s-confirmed">Confirmed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Major facilities hit</span><span class="metric-value metric-up">8</span></div>
+      <div class="metric"><span class="metric-label">Production offline</span><span class="metric-value metric-up">~12% GCC capacity</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-badge tier-1">🔴 Tier 1 hit: Ras Tanura
+        <span class="info-icon">i</span>
+        <div class="tooltip">Ras Tanura is the world's largest offshore oil export terminal, handling ~550,000 bbl/day and approximately 7% of global oil exports. A confirmed shutdown here alone drives global oil price spikes.</div>
+      </div>
+      <div class="tier-badge tier-1">🔴 Tier 1 hit: Ras Laffan LNG
+        <span class="info-icon">i</span>
+        <div class="tooltip">Ras Laffan is the world's largest LNG processing complex, supplying ~30% of global LNG. A halt here triggers emergency price responses across European and Asian gas markets within hours.</div>
+      </div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>Est. GCC production capacity offline</span><span>~12%</span></div>
+      <div class="progress-bar"><div class="progress-fill fill-red" style="width:12%"></div></div>
+    </div>
+    <p class="card-summary">Saudi Aramco's Ras Tanura shut down after drone-caused fire <span class="date-tag">Mar 2</span>. QatarEnergy Ras Laffan LNG halted same day <span class="date-tag">Mar 2</span>. Mussafah terminal (Abu Dhabi), Fujairah Oil Terminal, and Port of Duqm fuel tanks struck over <span class="date-tag">Mar 2–4</span>. Both Tier 1 assets confirmed hit.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.bloomberg.com/news/articles/2026-03-02/saudi-arabia-s-ras-tanura-refinery-shuts-down-after-drone-attack" target="_blank">Bloomberg · Saudi Arabia's Ras Tanura Refinery Halts (Mar 2)</a>
+      <a href="https://www.aljazeera.com/news/2026/3/4/which-oil-and-gas-facilities-in-the-gulf-have-been-attacked" target="_blank">Al Jazeera · Which oil and gas facilities have been attacked? (Mar 4)</a>
+      <a href="https://thepeninsulaqatar.com/article/02/03/2026/iran-drones-target-mesaieed-power-plant-qatarenergy-ras-laffan-facility-ministry-of-defense" target="_blank">The Peninsula Qatar · Iran drones target QatarEnergy Ras Laffan (Mar 2)</a>
+    </div>
+  </div>
+
+  <!-- 4. CIVIL INFRASTRUCTURE / HOSPITALS -->
+  <div class="card confirmed" id="card4">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#4</span>
+        <span class="card-title">Attacks on civil infrastructure incl. hospitals in Iran</span>
+      </div>
+      <span class="status-dot s-confirmed">Confirmed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Health facilities hit</span><span class="metric-value metric-up">10+ (WHO verified)</span></div>
+      <div class="metric"><span class="metric-label">HCW killed</span><span class="metric-value metric-up">4</span></div>
+      <div class="metric"><span class="metric-label">HCW injured</span><span class="metric-value metric-up">25</span></div>
+      <div class="metric"><span class="metric-label">Schools hit</span><span class="metric-value metric-up">3+</span></div>
+    </div>
+    <p class="card-summary">WHO verified 10+ health facility attacks from <span class="date-tag">Feb 28 onwards</span>. Gandhi Hospital Tehran and Tehran IVF clinic damaged <span class="date-tag">Mar 1</span>. Girls' school in Minab struck with est. 165 killed <span class="date-tag">Mar 2</span>. UN Human Rights Office opened investigation <span class="date-tag">Mar 3</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.aljazeera.com/news/2026/3/2/iran-demands-international-action-after-attacks-impact-hospitals-schools" target="_blank">Al Jazeera · Iran demands action after attacks on hospitals (Mar 2)</a>
+      <a href="https://www.middleeasteye.net/news/us-israeli-strikes-iran-tear-through-ivf-clinic-hospitals-and-homes" target="_blank">Middle East Eye · US-Israeli strikes tear through IVF clinic &amp; hospitals</a>
+      <a href="https://www.cbsnews.com/news/iran-girls-school-alleged-strike/" target="_blank">CBS News · Iran says girls' school hit by deadly air strike</a>
+    </div>
+  </div>
+
+  <!-- 5. DESALINATION -->
+  <div class="card developing" id="card5">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#5</span>
+        <span class="card-title">Attacks on GCC water supply / desalination plants</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Desalination plants hit</span><span class="metric-value metric-up">2 hit / threatened</span></div>
+      <div class="metric"><span class="metric-label">UAE water supply at risk</span><span class="metric-value metric-up">~15%</span></div>
+    </div>
+    <div class="tier-row">
+      <div class="tier-badge tier-1">🟡 Tier 1 threatened: Jebel Ali complex
+        <span class="info-icon">i</span>
+        <div class="tooltip">Jebel Ali's desalination complex supplies an estimated 70% of Dubai's daily fresh water. A confirmed strike would create a humanitarian crisis within 72 hours for a city of 3.5M people.</div>
+      </div>
+    </div>
+    <p class="card-summary">Iran struck a Fujairah power plant feeding a major desalination complex <span class="date-tag">Mar 2</span>; Kuwait facility hit by drone debris <span class="date-tag">Mar 3</span>. No direct strike on Jebel Ali complex yet. Iran's own reservoirs at 33% capacity from 6-year drought — independently worsening <span class="date-tag">as of Mar 4</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://mezha.net/eng/bukvy/iran_strikes_gulf_water/" target="_blank">Mezha.net · Iran Strikes Gulf Water Infrastructure</a>
+      <a href="https://www.iranintl.com/en/202603044239" target="_blank">Iran International · Real risk in Iran war is water (Mar 4)</a>
+      <a href="https://fortune.com/2026/03/05/iran-war-its-not-the-oil-its-the-water/" target="_blank">Fortune · In the Iran war, it's not the oil — it's the water (Mar 5)</a>
+    </div>
+  </div>
+
+  <!-- 6. POWER PLANTS IRAN -->
+  <div class="card developing" id="card6">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#6</span>
+        <span class="card-title">Attacks on power plants inside Iran</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Nuclear sites damaged</span><span class="metric-value metric-up">1 (Natanz)</span></div>
+      <div class="metric"><span class="metric-label">Plants threatened</span><span class="metric-value metric-up">Bushehr (nuclear)</span></div>
+      <div class="metric"><span class="metric-label">Grid impact</span><span class="metric-value">Unclear</span></div>
+    </div>
+    <p class="card-summary">US/Israel struck Natanz enrichment facility <span class="date-tag">Feb 28</span>; IAEA confirmed structural damage <span class="date-tag">Mar 3</span>. Rosatom CEO warned of rising threat to Bushehr nuclear plant <span class="date-tag">Mar 3</span>. No confirmed strikes on conventional power generation yet as of <span class="date-tag">Mar 7</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (2)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.aljazeera.com/news/2026/3/3/iaea-confirms-some-damage-to-irans-natanz-nuclear-facility" target="_blank">Al Jazeera · IAEA confirms damage at Natanz nuclear facility (Mar 3)</a>
+      <a href="https://www.themoscowtimes.com/2026/03/03/rosatom-ceo-warns-of-rising-threat-to-irans-bushehr-nuclear-plant-a92104" target="_blank">The Moscow Times · Rosatom CEO warns of threat to Bushehr (Mar 3)</a>
+    </div>
+  </div>
+
+  <!-- 7. REBELLION IN IRAN -->
+  <div class="card confirmed" id="card7">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#7</span>
+        <span class="card-title">Refugee crisis in Iran or internal popular rebellion</span>
+      </div>
+      <span class="status-dot s-confirmed">Confirmed</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Ongoing since</span><span class="metric-value">Dec 28, 2025 (69 days)</span></div>
+      <div class="metric"><span class="metric-label">Cities affected</span><span class="metric-value metric-up">15+</span></div>
+      <div class="metric"><span class="metric-label">Crackdown deaths (est.)</span><span class="metric-value metric-up">2,000–40,000</span></div>
+    </div>
+    <p class="card-summary">Mass protests erupted <span class="date-tag">Dec 28, 2025</span> — deadliest since 1979. Intensified sharply after Khamenei killed <span class="date-tag">Feb 28, 2026</span>; 15+ cities affected as of <span class="date-tag">Mar 5</span>. IRGC crackdown ongoing. No UN-confirmed mass refugee exodus yet.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://en.wikipedia.org/wiki/2025%E2%80%932026_Iranian_protests" target="_blank">Wikipedia · 2025–2026 Iranian protests</a>
+      <a href="https://www.amnesty.org/en/latest/campaigns/2026/01/what-happened-at-the-protests-in-iran/" target="_blank">Amnesty International · What happened at the protests in Iran?</a>
+      <a href="https://www.britannica.com/event/2026-Iranian-Protests" target="_blank">Britannica · 2026 Iranian Protests</a>
+    </div>
+  </div>
+
+  <!-- 8. GCC EXPAT EXODUS -->
+  <div class="card developing" id="card8">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#8</span>
+        <span class="card-title">GCC expatriate populations fleeing</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Scale</span><span class="metric-value">Precaution-driven</span></div>
+      <div class="metric"><span class="metric-label">Dubai expat pop.</span><span class="metric-value">3.5M (90% of city)</span></div>
+      <div class="metric"><span class="metric-label">Majority staying?</span><span class="metric-value metric-down">Yes</span></div>
+    </div>
+    <p class="card-summary">Reports of wealthy expats paying large sums for private charter flights and 10-hour SUV convoys to Riyadh emerging from <span class="date-tag">Mar 1</span>. Dubai airport, Jebel Ali port, and 2 luxury hotels damaged <span class="date-tag">Feb 28–Mar 2</span>. Vast majority of 3.5M residents still choosing to stay as of <span class="date-tag">Mar 3</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (2)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.foxbusiness.com/lifestyle/travelers-stranded-dubai-paying-huge-sums-flee-private-charter-flights-amid-operation-epic-fury" target="_blank">Fox Business · Travelers stranded in Dubai paying huge sums to flee</a>
+      <a href="https://dnyuz.com/2026/03/03/they-moved-to-dubai-in-pursuit-of-the-expat-dream-theyre-not-giving-it-up-so-easily/" target="_blank">DNYUZ · They moved to Dubai in pursuit of the expat dream (Mar 3)</a>
+    </div>
+  </div>
+
+  <!-- 9. GCC INVESTMENT / US MARKETS -->
+  <div class="card developing" id="card9">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#9</span>
+        <span class="card-title">Collapse of GCC investment into US financial markets</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">S&amp;P 500 since Feb 28</span><span class="metric-value metric-up">▼ (under pressure)</span></div>
+      <div class="metric"><span class="metric-label">USD Index</span><span class="metric-value metric-down">▲ +1.44%</span></div>
+      <div class="metric"><span class="metric-label">GCC withdrawal confirmed?</span><span class="metric-value">No</span></div>
+    </div>
+    <p class="card-summary">No confirmed GCC divestment from US markets yet as of <span class="date-tag">Mar 7</span>. USD actually strengthening (+1.44%) as safe-haven demand rises <span class="date-tag">Mar 4</span>. If Hormuz closure persists, reduced petrodollar recycling into US equities could follow — not yet observed.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (2)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.caymancompass.com/2026/03/04/escalating-iran-war-pushes-us-dollar-up-and-stock-markets-down/" target="_blank">Cayman Compass · Iran war pushes USD up and stock markets down (Mar 4)</a>
+      <a href="https://en.wikipedia.org/wiki/Economic_impact_of_the_2026_Iran_war" target="_blank">Wikipedia · Economic impact of the 2026 Iran war</a>
+    </div>
+  </div>
+
+  <!-- 10. US ECONOMY / PETRODOLLAR -->
+  <div class="card developing" id="card10">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#10</span>
+        <span class="card-title">Collapse of US economy / weakening of petrodollar</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Oil price</span><span class="metric-value metric-up">$80+/bbl ▲14%</span></div>
+      <div class="metric"><span class="metric-label">US gas price</span><span class="metric-value metric-up">$3.20/gal</span></div>
+      <div class="metric"><span class="metric-label">GDP forecast</span><span class="metric-value metric-up">Under revision</span></div>
+    </div>
+    <p class="card-summary">Pre-war GDP forecast of 2.4% under downward revision per Oxford Economics <span class="date-tag">Mar 3</span>. Oil up 14% since <span class="date-tag">Feb 28</span>; gas at $3.20/gal <span class="date-tag">Mar 5</span>. US is a net energy exporter, cushioning impact vs. Europe/Asia. Petrodollar dominance structurally intact but under press debate.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (2)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://abcnews.com/Business/iran-war-impact-us-economy/story?id=130749101" target="_blank">ABC News · How the Iran war could impact the US economy</a>
+      <a href="https://www.oxfordeconomics.com/resource/the-2026-iran-war-an-initial-take-and-implications/" target="_blank">Oxford Economics · 2026 Iran war: initial implications (Mar 3)</a>
+    </div>
+  </div>
+
+  <!-- 11. US GROUND TROOPS -->
+  <div class="card developing" id="card11">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#11</span>
+        <span class="card-title">Deployment of US ground troops to Iran</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Ground troops deployed</span><span class="metric-value">0 (as of Mar 7)</span></div>
+      <div class="metric"><span class="metric-label">82nd Airborne exercise</span><span class="metric-value metric-up">Cancelled Mar 6</span></div>
+      <div class="metric"><span class="metric-label">Trump ruled it out?</span><span class="metric-value metric-up">No (Mar 4)</span></div>
+    </div>
+    <p class="card-summary">No deployment as of <span class="date-tag">Mar 7</span>. 82nd Airborne abruptly cancelled training exercise <span class="date-tag">Mar 6</span> — widely interpreted as pre-deployment preparation. Trump said "never say never" <span class="date-tag">Mar 4</span>; Sec. Hegseth declined to rule it out same day. Iran FM said Iran "confident" it could repel a ground invasion <span class="date-tag">Mar 5</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.washingtonpost.com/national-security/2026/03/06/army-82nd-airborne-iran/" target="_blank">Washington Post · Army Airborne moves invite speculation (Mar 6)</a>
+      <a href="https://www.aljazeera.com/features/2026/3/4/will-the-us-put-boots-on-the-ground-in-iran" target="_blank">Al Jazeera · Will the US put boots on the ground in Iran? (Mar 4)</a>
+      <a href="https://www.nbcnews.com/world/iran/iran-foreign-minister-interview-rcna261920" target="_blank">NBC News · Iran FM: confident we could counter US ground invasion (Mar 5)</a>
+    </div>
+  </div>
+
+  <!-- 12. NUCLEAR THREATS -->
+  <div class="card developing" id="card12">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#12</span>
+        <span class="card-title">Use or credible threat of nuclear weapons</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Explicit nuclear threats</span><span class="metric-value metric-up">2</span></div>
+      <div class="metric"><span class="metric-label">Nuclear sites targeted</span><span class="metric-value metric-up">1 (Natanz, Feb 28)</span></div>
+      <div class="metric"><span class="metric-label">Nuclear weapons used</span><span class="metric-value metric-down">No</span></div>
+    </div>
+    <p class="card-summary">US/Israel struck Natanz enrichment facility <span class="date-tag">Feb 28</span>; IAEA confirmed damage <span class="date-tag">Mar 3</span>. Iran threatened to strike Israel's Dimona reactor if regime-change operations proceed <span class="date-tag">Mar 3</span>. JURIST published nuclear escalation risk assessment <span class="date-tag">Mar 4</span>. No nuclear weapons used as of <span class="date-tag">Mar 7</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.timesofisrael.com/iran-threatens-to-hit-dimona-nuclear-site-if-israel-and-us-try-to-topple-regime/" target="_blank">Times of Israel · Iran threatens to hit Dimona nuclear site (Mar 3)</a>
+      <a href="https://www.jurist.org/commentary/2026/03/iran-israel-and-the-risk-of-nuclear-war-a-strategic-assessment/" target="_blank">JURIST · Iran, Israel, and the Risks of Nuclear War (Mar 4)</a>
+      <a href="https://www.armscontrol.org/issue-briefs/2026-03/did-irans-nuclear-and-missile-programs-pose-imminent-threat-no" target="_blank">Arms Control Association · Did Iran's nuclear programs pose an imminent threat? (Mar 2026)</a>
+    </div>
+  </div>
+
+  <!-- 13. EUROPEAN INVOLVEMENT -->
+  <div class="card developing" id="card13">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#13</span>
+        <span class="card-title">European powers (Germany, France, UK) entering conflict</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Countries w/ assets deployed</span><span class="metric-value metric-up">3 (UK, France, Germany)</span></div>
+      <div class="metric"><span class="metric-label">UK warships deployed</span><span class="metric-value metric-up">1 + counter-drone helos</span></div>
+      <div class="metric"><span class="metric-label">Direct combat entry</span><span class="metric-value">No (as of Mar 7)</span></div>
+    </div>
+    <p class="card-summary">UK opened air bases to US and authorised use for Iran strikes <span class="date-tag">Feb 28</span>; deployed destroyer and counter-drone helicopters <span class="date-tag">Mar 1</span>. E3 joint statement warning of "proportionate defensive measures" <span class="date-tag">Mar 1</span>. France sent anti-missile systems to Cyprus <span class="date-tag">Mar 2</span>. Ex-CIA chief Petraeus called European entry "certainly a possibility" <span class="date-tag">Mar 3</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.france24.com/en/live-news/20260301-france-germany-uk-ready-to-take-defensive-action-against-iran" target="_blank">France 24 · France, Germany, UK ready to take defensive action (Mar 1)</a>
+      <a href="https://www.middleeasteye.net/live-blog/live-blog-update/france-germany-and-uk-warn-they-could-join-war-iran" target="_blank">Middle East Eye · France, Germany and UK warn they could join war on Iran (Mar 1)</a>
+      <a href="https://www.euronews.com/my-europe/2026/03/03/europes-participation-in-iran-war-certainly-a-possibility-ex-cia-boss-petraeus-tells-euron" target="_blank">Euronews · Europe's participation 'certainly a possibility' — Petraeus (Mar 3)</a>
+    </div>
+  </div>
+
+  <!-- 14. RUSSIA / CHINA -->
+  <div class="card developing" id="card14">
+    <div class="card-header">
+      <div class="card-title-row">
+        <span class="pred-num">#14</span>
+        <span class="card-title">Russia or China entering on Iran's side → WW3</span>
+      </div>
+      <span class="status-dot s-developing">Developing</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Intel sharing (Russia)</span><span class="metric-value metric-up">✓ Confirmed Mar 6</span></div>
+      <div class="metric"><span class="metric-label">Arms supply</span><span class="metric-value">Under watch</span></div>
+      <div class="metric"><span class="metric-label">Direct military entry</span><span class="metric-value metric-down">No (as of Mar 7)</span></div>
+    </div>
+    <p class="card-summary">Russia confirmed providing Iran with satellite intelligence on US military targets per CNN <span class="date-tag">Mar 6</span>. China reportedly preparing financial/material support per US intelligence <span class="date-tag">Mar 5</span>. Both raised objections at UN Security Council <span class="date-tag">Mar 3–4</span>. Neither has entered militarily as of <span class="date-tag">Mar 7</span>.</p>
+    <button class="sources-toggle" onclick="toggleSources(this)">▶ Sources (3)</button>
+    <div class="sources-list">
+      <div class="source-label">Verified sources</div>
+      <a href="https://www.cnn.com/2026/03/06/politics/russia-aiding-iran-targeting" target="_blank">CNN · Russia aiding Iran's war effort by providing intel on US targets (Mar 6)</a>
+      <a href="https://www.aljazeera.com/news/2026/3/4/russia-china-raise-diplomatic-voices-against-us-israeli-attacks-on-iran" target="_blank">Al Jazeera · Russia, China raise diplomatic voices against attacks (Mar 4)</a>
+      <a href="https://www.cnbc.com/2026/03/02/iran-china-russia-strikes-assistance-alliance-weapons-missiles-geopolitics-oil-prices-ukraine.html" target="_blank">CNBC · Why Iran should not count on allies Russia and China (Mar 2)</a>
+    </div>
+  </div>
+
+</div><!-- end .grid -->
+</div><!-- end .main-layout -->
+
+<div class="footer">Predictions sourced from transcript of Prof. Jiang Xueqin · Monitored by automated search every 6 hours · Not affiliated with any news organisation</div>
+
+<!-- MANAGE SOURCES PANEL -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="panel" id="sourcesPanel">
+  <div class="panel-head">
+    <div>
+      <h2>⚙ Manage Sources</h2>
+      <p>Enable or disable sources used in each scheduled search run.<br>Changes take effect on the next scheduled run.</p>
+    </div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-notice">
+    ⏱ Changes apply to future runs only — past data is not affected.
+  </div>
+  <div class="panel-body">
+
+    <div class="source-category">
+      <div class="source-category-title">Wire Services</div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Reuters</div>
+          <div class="source-desc">Global newswire — primary breaking news source</div>
+          <span class="source-tag tag-wire">Wire</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Associated Press (AP)</div>
+          <div class="source-desc">US-based global newswire</div>
+          <span class="source-tag tag-wire">Wire</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="source-category">
+      <div class="source-category-title">Broadcast &amp; Digital</div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">BBC News</div>
+          <div class="source-desc">UK public broadcaster with strong Middle East bureau</div>
+          <span class="source-tag tag-broadcast">Broadcast</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Al Jazeera</div>
+          <div class="source-desc">Qatar-based broadcaster — strong regional coverage</div>
+          <span class="source-tag tag-broadcast">Broadcast</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">CNN</div>
+          <div class="source-desc">US cable network with Pentagon and State Dept access</div>
+          <span class="source-tag tag-broadcast">Broadcast</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">NPR</div>
+          <div class="source-desc">US public radio — strong foreign affairs coverage</div>
+          <span class="source-tag tag-broadcast">Broadcast</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="source-category">
+      <div class="source-category-title">Financial &amp; Business</div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Bloomberg</div>
+          <div class="source-desc">Financial markets and energy price data</div>
+          <span class="source-tag tag-financial">Financial</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Financial Times</div>
+          <div class="source-desc">Global business and geopolitics</div>
+          <span class="source-tag tag-financial">Financial</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Wall Street Journal</div>
+          <div class="source-desc">US business and national security</div>
+          <span class="source-tag tag-financial">Financial</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="source-category">
+      <div class="source-category-title">Regional</div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Middle East Eye</div>
+          <div class="source-desc">UK-based with strong on-the-ground Middle East reporting</div>
+          <span class="source-tag tag-regional">Regional</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Iran International</div>
+          <div class="source-desc">Persian-language outlet covering Iran closely</div>
+          <span class="source-tag tag-regional">Regional</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Times of Israel</div>
+          <div class="source-desc">Israeli English-language outlet — Israel/Iran perspective</div>
+          <span class="source-tag tag-regional">Regional</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">France 24</div>
+          <div class="source-desc">French international broadcaster — European perspective</div>
+          <span class="source-tag tag-regional">Regional</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="source-category">
+      <div class="source-category-title">Analysis &amp; Think Tanks</div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Council on Foreign Relations (CFR)</div>
+          <div class="source-desc">US foreign policy analysis</div>
+          <span class="source-tag tag-analysis">Analysis</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Arms Control Association</div>
+          <div class="source-desc">Nuclear and weapons policy specialists</div>
+          <span class="source-tag tag-analysis">Analysis</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Oxford Economics</div>
+          <div class="source-desc">Macroeconomic forecasting and impact modelling</div>
+          <span class="source-tag tag-analysis">Analysis</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Amnesty International</div>
+          <div class="source-desc">Human rights monitoring — civil casualty verification</div>
+          <span class="source-tag tag-analysis">Analysis</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="source-category">
+      <div class="source-category-title">Social &amp; On-the-ground <span style="font-size:10px;color:#8e8e93;font-weight:400;font-style:italic;">(flagged as unverified in reports)</span></div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">X / Twitter (conflict accounts)</div>
+          <div class="source-desc">Real-time on-the-ground posts — cited as unverified</div>
+          <span class="source-tag tag-social">Social</span>
+          <span class="source-tag tag-unverified">Unverified</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="source-row">
+        <div class="source-info">
+          <div class="source-name">Telegram (conflict channels)</div>
+          <div class="source-desc">OSINT and field reports — cited as unverified</div>
+          <span class="source-tag tag-social">Social</span>
+          <span class="source-tag tag-unverified">Unverified</span>
+        </div>
+        <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Scroll-spy: highlight active TOC item
+  const tocLinks = document.querySelectorAll('.toc-item');
+  const cards = Array.from({length: 14}, (_, i) => document.getElementById('card' + (i + 1)));
+  function updateActiveToc() {
+    let active = 0;
+    cards.forEach((card, i) => {
+      if (card && card.getBoundingClientRect().top <= 120) active = i;
+    });
+    tocLinks.forEach((l, i) => l.classList.toggle('active', i === active));
+  }
+  window.addEventListener('scroll', updateActiveToc, { passive: true });
+  updateActiveToc();
+
+  // Jump highlight: flash the card when its TOC link is clicked
+  document.querySelectorAll('.toc-item').forEach(link => {
+    link.addEventListener('click', function() {
+      const card = document.getElementById(this.getAttribute('href').slice(1));
+      if (!card) return;
+      card.classList.remove('jump-highlight');
+      void card.offsetWidth; // force reflow so animation restarts if clicked twice
+      card.classList.add('jump-highlight');
+      card.addEventListener('animationend', () => card.classList.remove('jump-highlight'), { once: true });
+    });
+  });
+
+  function toggleTimeline() {
+    const bar = document.getElementById('timelineBar');
+    const btn = document.getElementById('timelineToggle');
+    bar.classList.toggle('hidden');
+    btn.classList.toggle('collapsed');
+  }
+  function toggleSources(btn) {
+    const list = btn.nextElementSibling;
+    const isOpen = list.classList.contains('open');
+    list.classList.toggle('open');
+    btn.textContent = btn.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
+  }
+  function openPanel() {
+    document.getElementById('sourcesPanel').classList.add('open');
+    document.getElementById('panelOverlay').classList.add('open');
+  }
+  function closePanel() {
+    document.getElementById('sourcesPanel').classList.remove('open');
+    document.getElementById('panelOverlay').classList.remove('open');
+  }
+</script>
+</body>
+</html>
