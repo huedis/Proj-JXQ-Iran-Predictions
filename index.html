@@ -8,28 +8,20 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: #f2f2f7; color: #1c1c1e; }
 
-  /* ── HEADER — Apple HIG, no border-radius, full width ── */
-  .header { background: #1c1c1e; color: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  /* ── HEADER — title only ── */
+  .header { background: #1c1c1e; color: white; padding: 16px 32px; }
   .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.4px; }
   .header h1 span { color: rgba(255,255,255,0.48); font-weight: 400; font-size: 13px; display: block; margin-top: 2px; letter-spacing: -0.1px; }
-  .header-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-  .header-meta { text-align: right; font-size: 12px; color: rgba(255,255,255,0.48); }
-  .header-meta strong { color: white; display: block; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
-  .header-divider { width: 1px; height: 28px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
-  .sources-btn { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: background 0.15s; font-family: inherit; letter-spacing: -0.1px; }
-  .sources-btn:hover { background: rgba(255,255,255,0.18); }
 
-  /* ── TIMELINE TOGGLE ROW ── */
-  .timeline-toggle-row { background: #f2f2f7; padding: 12px 32px 0; display: flex; align-items: center; justify-content: space-between; }
-  .timeline-toggle-btn { background: none; border: none; color: #8e8e93; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; cursor: pointer; padding: 0 0 8px; display: flex; align-items: center; gap: 5px; font-family: inherit; }
-  .timeline-toggle-btn:hover { color: #636366; }
-  .timeline-toggle-btn .chevron { font-size: 9px; transition: transform 0.2s; display: inline-block; }
-  .timeline-toggle-btn.collapsed .chevron { transform: rotate(-90deg); }
+  /* ── SUB-BAR — last updated + manage sources ── */
+  .sub-bar { background: #f2f2f7; padding: 8px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5ea; }
+  .sub-bar-meta { font-size: 13px; color: #8e8e93; letter-spacing: -0.1px; }
+  .sub-bar-btn { background: none; border: none; font-size: 13px; color: #8e8e93; cursor: pointer; font-family: inherit; letter-spacing: -0.1px; padding: 0; }
+  .sub-bar-btn:hover { color: #3c3c43; }
 
   /* ── TIMELINE BAR — card-style with side margins, rounded edges ── */
-  .timeline-bar { background: white; margin: 0 32px 16px; border-radius: 12px; padding: 0 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04); transition: max-height 0.25s ease, margin-bottom 0.25s ease, opacity 0.2s ease; max-height: 150px; }
-  .timeline-bar.hidden { max-height: 0; margin-bottom: 0; overflow: hidden; opacity: 0; padding-top: 0; padding-bottom: 0; }
-  .timeline-bar::-webkit-scrollbar { height: 4px; }
+  .timeline-bar { background: white; margin: 16px 32px 16px; border-radius: 12px; padding: 0 8px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04); }
+.timeline-bar::-webkit-scrollbar { height: 4px; }
   .timeline-bar::-webkit-scrollbar-track { background: transparent; }
   .timeline-bar::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 2px; }
   .timeline-track { display: flex; align-items: stretch; min-width: max-content; }
@@ -50,8 +42,13 @@
   .tl-label { font-size: 10px; color: #8e8e93; margin-top: 3px; }
   .tl-delta { font-size: 9px; color: #007AFF; margin-top: 2px; font-style: italic; white-space: nowrap; letter-spacing: 0; }
 
+  /* ── CONTROLS ROW ── */
+  .controls-row { display: flex; justify-content: flex-end; padding: 12px 32px 4px; }
+  .expand-all-btn { background: none; border: none; color: #007AFF; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; padding: 0; letter-spacing: -0.1px; }
+  .expand-all-btn:hover { color: #0062cc; }
+
   /* ── MAIN LAYOUT — sidebar + grid ── */
-  .main-layout { display: flex; gap: 20px; padding: 8px 32px 24px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+  .main-layout { display: flex; gap: 20px; padding: 6px 32px 24px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
 
   /* ── TABLE OF CONTENTS SIDEBAR — Apple macOS source-list ── */
   .toc-sidebar { width: 182px; flex-shrink: 0; position: sticky; top: 16px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 1px rgba(0,0,0,0.04); overflow: hidden; }
@@ -105,9 +102,12 @@
   .tier-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; cursor: default; position: relative; display: flex; align-items: center; gap: 4px; }
   .tier-1 { background: #fff1f0; color: #c0392b; border: 1px solid #ffd0cd; }
   .tier-2 { background: #fff8f0; color: #c05621; border: 1px solid #ffd9b0; }
-  .tier-badge .info-icon { font-size: 10px; background: rgba(0,0,0,0.08); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: help; }
-  .tooltip { display: none; position: absolute; left: 0; top: 100%; margin-top: 4px; background: #1c1c1e; color: white; font-size: 11px; font-weight: 400; padding: 8px 10px; border-radius: 8px; width: 240px; z-index: 100; line-height: 1.5; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-  .tier-badge:hover .tooltip { display: block; }
+  .tier-badge .info-icon { font-size: 10px; background: rgba(0,0,0,0.08); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .tooltip { display: none; position: absolute; left: 0; top: 100%; margin-top: 4px; background: #1c1c1e; color: white; font-size: 11px; font-weight: 400; padding: 8px 28px 8px 10px; border-radius: 8px; width: 240px; z-index: 100; line-height: 1.5; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .tier-badge:hover .tooltip, .tooltip.open { display: block; }
+  .tooltip.flip-up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 4px; }
+  .tooltip-close { position: absolute; top: 5px; right: 7px; background: none; border: none; color: rgba(255,255,255,0.55); font-size: 15px; line-height: 1; cursor: pointer; padding: 0; font-family: inherit; }
+  .tooltip-close:hover { color: white; }
 
   /* ── CARD SUMMARY ── */
   .card-summary { font-size: 13px; color: #3c3c43; line-height: 1.6; margin-top: 8px; letter-spacing: -0.1px; }
@@ -135,6 +135,15 @@
   .footer { background: #1c1c1e; color: rgba(255,255,255,0.38); text-align: center; padding: 14px; font-size: 11px; margin-top: 8px; letter-spacing: -0.1px; }
 
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  @media (max-width: 700px) {
+    .toc-sidebar { display: none; }
+    .header { padding: 12px 16px; }
+    .sub-bar { padding: 7px 16px; }
+    .timeline-bar { margin: 12px 16px 0; }
+    .controls-row { padding: 10px 16px 4px; }
+    .main-layout { padding: 6px 16px 20px; }
+  }
 
   /* ── MANAGE SOURCES PANEL ── */
   .panel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 200; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
@@ -178,26 +187,15 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div>
-    <h1>Iran–GCC Conflict Predictions Tracker
-      <span>Based on analysis by Prof. Jiang Xueqin · 14 predictions monitored</span>
-    </h1>
-  </div>
-  <div class="header-right">
-    <div class="header-meta">
-      <strong>Last updated: 7 Mar 2026, 14:00</strong>
-      Updated every 6 hours
-    </div>
-    <div class="header-divider"></div>
-    <button class="sources-btn" onclick="openPanel()">⚙ Manage Sources</button>
-  </div>
+  <h1>Iran–GCC Conflict Predictions Tracker
+    <span>Based on analysis by Prof. Jiang Xueqin · 14 predictions monitored</span>
+  </h1>
 </div>
 
-<!-- TIMELINE TOGGLE HEADER -->
-<div class="timeline-toggle-row">
-  <button class="timeline-toggle-btn" id="timelineToggle" onclick="toggleTimeline()">
-    <span class="chevron">▼</span> Update history
-  </button>
+<!-- SUB-BAR -->
+<div class="sub-bar">
+  <span class="sub-bar-meta" id="lastUpdatedMeta">Last updated: 7 Mar 2026, 14:00 · Updated every 6 hours</span>
+  <button class="sub-bar-btn" onclick="openPanel()">⚙ Manage Sources</button>
 </div>
 
 <!-- TIMELINE BAR -->
@@ -291,6 +289,11 @@
   </div>
 </div>
 
+<!-- CONTROLS ROW -->
+<div class="controls-row">
+  <button class="expand-all-btn" id="expandAllBtn" onclick="toggleAllSources()">Expand all sources</button>
+</div>
+
 <!-- MAIN LAYOUT -->
 <div class="main-layout">
 
@@ -360,12 +363,12 @@
     </div>
     <div class="tier-row">
       <div class="tier-badge tier-1">🔴 Tier 1 hit: 5th Fleet HQ (Bahrain)
-        <span class="info-icon">i</span>
-        <div class="tooltip">Tier 1 bases house strategic command infrastructure — CENTCOM coordination, naval command, and intelligence fusion. Their degradation affects the entire theatre's operational coherence, not just local headcount.</div>
+        <span class="info-icon" onclick="toggleTooltip(this.parentElement)">i</span>
+        <div class="tooltip">Tier 1 bases house strategic command infrastructure — CENTCOM coordination, naval command, and intelligence fusion. Their degradation affects the entire theatre's operational coherence, not just local headcount.<button class="tooltip-close" onclick="closeTooltip(event,this.closest('.tier-badge'))">×</button></div>
       </div>
       <div class="tier-badge tier-1">🔴 Tier 1 hit: Al Udeid (Qatar)
-        <span class="info-icon">i</span>
-        <div class="tooltip">Al Udeid is the largest US air base in the Middle East and the forward HQ of AFCENT, coordinating all US air operations in the region. A strike here disrupts air campaign planning and regional air dominance.</div>
+        <span class="info-icon" onclick="toggleTooltip(this.parentElement)">i</span>
+        <div class="tooltip">Al Udeid is the largest US air base in the Middle East and the forward HQ of AFCENT, coordinating all US air operations in the region. A strike here disrupts air campaign planning and regional air dominance.<button class="tooltip-close" onclick="closeTooltip(event,this.closest('.tier-badge'))">×</button></div>
       </div>
     </div>
     <div class="progress-row">
@@ -397,12 +400,12 @@
     </div>
     <div class="tier-row">
       <div class="tier-badge tier-1">🔴 Tier 1 hit: Ras Tanura
-        <span class="info-icon">i</span>
-        <div class="tooltip">Ras Tanura is the world's largest offshore oil export terminal, handling ~550,000 bbl/day and approximately 7% of global oil exports. A confirmed shutdown here alone drives global oil price spikes.</div>
+        <span class="info-icon" onclick="toggleTooltip(this.parentElement)">i</span>
+        <div class="tooltip">Ras Tanura is the world's largest offshore oil export terminal, handling ~550,000 bbl/day and approximately 7% of global oil exports. A confirmed shutdown here alone drives global oil price spikes.<button class="tooltip-close" onclick="closeTooltip(event,this.closest('.tier-badge'))">×</button></div>
       </div>
       <div class="tier-badge tier-1">🔴 Tier 1 hit: Ras Laffan LNG
-        <span class="info-icon">i</span>
-        <div class="tooltip">Ras Laffan is the world's largest LNG processing complex, supplying ~30% of global LNG. A halt here triggers emergency price responses across European and Asian gas markets within hours.</div>
+        <span class="info-icon" onclick="toggleTooltip(this.parentElement)">i</span>
+        <div class="tooltip">Ras Laffan is the world's largest LNG processing complex, supplying ~30% of global LNG. A halt here triggers emergency price responses across European and Asian gas markets within hours.<button class="tooltip-close" onclick="closeTooltip(event,this.closest('.tier-badge'))">×</button></div>
       </div>
     </div>
     <div class="progress-row">
@@ -459,8 +462,8 @@
     </div>
     <div class="tier-row">
       <div class="tier-badge tier-1">🟡 Tier 1 threatened: Jebel Ali complex
-        <span class="info-icon">i</span>
-        <div class="tooltip">Jebel Ali's desalination complex supplies an estimated 70% of Dubai's daily fresh water. A confirmed strike would create a humanitarian crisis within 72 hours for a city of 3.5M people.</div>
+        <span class="info-icon" onclick="toggleTooltip(this.parentElement)">i</span>
+        <div class="tooltip">Jebel Ali's desalination complex supplies an estimated 70% of Dubai's daily fresh water. A confirmed strike would create a humanitarian crisis within 72 hours for a city of 3.5M people.<button class="tooltip-close" onclick="closeTooltip(event,this.closest('.tier-badge'))">×</button></div>
       </div>
     </div>
     <p class="card-summary">Iran struck a Fujairah power plant feeding a major desalination complex <span class="date-tag">Mar 2</span>; Kuwait facility hit by drone debris <span class="date-tag">Mar 3</span>. No direct strike on Jebel Ali complex yet. Iran's own reservoirs at 33% capacity from 6-year drought — independently worsening <span class="date-tag">as of Mar 4</span>.</p>
@@ -912,18 +915,54 @@
     });
   });
 
-  function toggleTimeline() {
-    const bar = document.getElementById('timelineBar');
-    const btn = document.getElementById('timelineToggle');
-    bar.classList.toggle('hidden');
-    btn.classList.toggle('collapsed');
+  let allExpanded = false;
+  function toggleAllSources() {
+    allExpanded = !allExpanded;
+    document.querySelectorAll('.sources-list').forEach(list => {
+      list.classList.toggle('open', allExpanded);
+    });
+    document.querySelectorAll('.sources-toggle').forEach(btn => {
+      btn.textContent = btn.textContent.replace(
+        allExpanded ? '▶' : '▼', allExpanded ? '▼' : '▶'
+      );
+    });
+    const btn = document.getElementById('expandAllBtn');
+    btn.textContent = allExpanded ? 'Collapse all sources' : 'Expand all sources';
   }
+
   function toggleSources(btn) {
     const list = btn.nextElementSibling;
     const isOpen = list.classList.contains('open');
     list.classList.toggle('open');
     btn.textContent = btn.textContent.replace(isOpen ? '▼' : '▶', isOpen ? '▶' : '▼');
+    // Sync expand-all button state
+    const anyOpen = document.querySelectorAll('.sources-list.open').length > 0;
+    if (!anyOpen) { allExpanded = false; document.getElementById('expandAllBtn').textContent = 'Expand all sources'; }
   }
+  function toggleTooltip(badge) {
+    const tooltip = badge.querySelector('.tooltip');
+    const isOpen = tooltip.classList.contains('open');
+    // Close all open tooltips first
+    document.querySelectorAll('.tooltip.open').forEach(t => t.classList.remove('open', 'flip-up'));
+    if (!isOpen) {
+      // Flip upward if too close to bottom of viewport
+      const rect = badge.getBoundingClientRect();
+      if (rect.bottom + 160 > window.innerHeight) tooltip.classList.add('flip-up');
+      tooltip.classList.add('open');
+    }
+  }
+  function closeTooltip(event, badge) {
+    event.stopPropagation();
+    const tooltip = badge.querySelector('.tooltip');
+    tooltip.classList.remove('open', 'flip-up');
+  }
+  // Dismiss tooltip on outside tap/click
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.tier-badge')) {
+      document.querySelectorAll('.tooltip.open').forEach(t => t.classList.remove('open', 'flip-up'));
+    }
+  });
+
   function openPanel() {
     document.getElementById('sourcesPanel').classList.add('open');
     document.getElementById('panelOverlay').classList.add('open');
